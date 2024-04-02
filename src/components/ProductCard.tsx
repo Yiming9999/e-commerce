@@ -16,7 +16,7 @@ import { Product } from "../hooks/useProducts";
 import { CartItem } from "./ShoppingCart";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import { ProductDescription } from "./ProductDescription";
-import Delivery from "./delivery";
+import Delivery from "./Delivery";
 
 interface Props {
   product: Product;
