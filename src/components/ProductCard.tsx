@@ -13,16 +13,22 @@ import {
 import Stock from "./Stock";
 import Rating from "./Rating";
 import { Product } from "../hooks/useProducts";
+import { CartItem } from "./ShoppingCart";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
+import { ProductDescription } from "./ProductDescription";
+import Delivery from "./delivery";
 
 interface Props {
   product: Product;
-  addToCart: (product: Product) => void;
+  quantity: number;
+  addToCart: (userId: number, product: CartItem) => Promise<void>;
 }
 
+// Fix length
 const ProductCard = ({ product, addToCart }: Props) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDescriptionVisible, setDescriptionVisible] = useState(false);
 
+  // Users can click on the left and right buttons to navigate through the images
   const nextImage = () => {
     setCurrentImageIndex(
       (prevIndex) => (prevIndex + 1) % product.images.length
@@ -36,17 +42,13 @@ const ProductCard = ({ product, addToCart }: Props) => {
     );
   };
 
-  const toggleDescription = () => {
-    setDescriptionVisible((prev) => !prev);
-  };
-
   const originalPrice = product.price;
   const discountedPrice =
     originalPrice * (1 - product.discountPercentage / 100);
 
   return (
     <Card>
-      <Box width="full" height="250px" position="relative" overflow="hidden">
+      <Box width="full" height="350px" position="relative" overflow="hidden">
         {product.images && product.images.length > 0 && (
           <>
             <Image
@@ -57,20 +59,26 @@ const ProductCard = ({ product, addToCart }: Props) => {
               height="full"
               position="absolute"
             />
-            <Button
+            <ChevronLeftIcon
+              boxShadow="base"
+              borderRadius="full"
               position="absolute"
               left="0"
               top="50%"
               transform="translateY(-50%)"
+              zIndex="2"
               onClick={prevImage}
-            ></Button>
-            <Button
+            ></ChevronLeftIcon>
+            <ChevronRightIcon
+              boxShadow="base"
+              borderRadius="full"
               position="absolute"
               right="0"
               top="50%"
               transform="translateY(-50%)"
+              zIndex="2"
               onClick={nextImage}
-            ></Button>
+            ></ChevronRightIcon>
           </>
         )}
       </Box>
@@ -89,7 +97,12 @@ const ProductCard = ({ product, addToCart }: Props) => {
           <Text fontWeight="bold">
             {product.discountPercentage > 0 ? (
               <>
-                <Text as="span" textDecoration="line-through" marginRight={2}>
+                <Text
+                  color="red.500"
+                  as="span"
+                  textDecoration="line-through"
+                  marginRight={2}
+                >
                   ${originalPrice.toFixed(2)}
                 </Text>
                 <Text as="span" color="green.500">
@@ -100,22 +113,13 @@ const ProductCard = ({ product, addToCart }: Props) => {
               <>${originalPrice.toFixed(2)}</>
             )}
           </Text>
-          {product.discountPercentage > 0 && (
-            <Text color="red.500">Save {product.discountPercentage}%!</Text>
-          )}
-          {/* Toggle Button */}
-          <Button onClick={toggleDescription}>
-            {isDescriptionVisible ? "Hide Description" : "Show Description"}
-          </Button>
-          {isDescriptionVisible && (
-            <Text isTruncated>{product.description}</Text>
-          )}
+          <ProductDescription description={product.description} />
         </Stack>
       </CardBody>
+      <Delivery price={product.price} />
       <Button
-        colorScheme="teal"
-        variant="ghost"
-        onClick={() => addToCart(product)}
+        colorScheme="yellow"
+        onClick={() => addToCart(1, { ...product, quantity: 1 })}
       >
         Add to Cart
       </Button>

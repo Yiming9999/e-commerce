@@ -3,29 +3,27 @@ import NavBar from "./components/NavBar";
 import ProductGrid from "./components/ProductGrid";
 import CategoryList from "./components/CategoryList";
 import { useState } from "react";
-import ShoppingCart, { CartItem } from "./components/ShoppingCart";
-import { addToCart, handleDeleteItem, onAdd, onRemove } from "./utils/CartUtil";
-import { Product } from "./hooks/useProducts";
+import ShoppingCart from "./components/ShoppingCart";
+import useCarts from "./hooks/useCarts";
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchText, setSearchText] = useState("");
-  const [items, setItems] = useState<CartItem[]>([]);
+  const { cartInfo, addToCart, deleteItem, addOne, removeOne } = useCarts();
 
-  const add = (product: Product) => {
-    addToCart(product, setItems);
+  const handleSearch = (searchText: string) => {
+    setSearchText(searchText);
+    setSelectedCategory("");
   };
 
-  const deleteProduct = (id: number) => {
-    handleDeleteItem(id, setItems);
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSearchText("");
   };
 
-  const addOne = (id: number) => {
-    onAdd(id, setItems);
-  };
-
-  const removeOne = (id: number) => {
-    onRemove(id, setItems);
+  const clearAll = () => {
+    setSelectedCategory("");
+    setSearchText("");
   };
 
   return (
@@ -47,15 +45,28 @@ function App() {
           paddingX={5}
         >
           <Box>
-            <NavBar onSearch={(searchText) => setSearchText(searchText)} />
+            <NavBar
+              onSearch={(searchText) => handleSearch(searchText)}
+              onLogoClick={() => {
+                clearAll();
+              }}
+              onChange={(searchText) => setSearchText(searchText)}
+              searchText={searchText}
+            />
           </Box>
           <Spacer />
           <Box>
             <ShoppingCart
-              items={items}
-              onDelete={deleteProduct}
+              items={cartInfo.items}
+              onDelete={deleteItem}
               onAdd={addOne}
               onRemove={removeOne}
+              total={cartInfo.total}
+              discountedTotal={cartInfo.discountedTotal}
+              userId={cartInfo.userId}
+              id={cartInfo.id}
+              totalProducts={cartInfo.totalProducts}
+              totalQuantity={cartInfo.totalQuantity}
             />
           </Box>
         </Flex>
@@ -64,7 +75,7 @@ function App() {
         <GridItem area="aside" paddingX={5}>
           <CategoryList
             selectedCategory={selectedCategory}
-            onSelectCategory={(category) => setSelectedCategory(category)}
+            onSelectCategory={(category) => handleCategorySelect(category)}
           />
         </GridItem>
       </Show>
@@ -72,7 +83,8 @@ function App() {
         <ProductGrid
           selectedCategory={selectedCategory}
           searchText={searchText}
-          addToCart={add}
+          addToCart={addToCart}
+          quantity={0}
         />
       </GridItem>
     </Grid>

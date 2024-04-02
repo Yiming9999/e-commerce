@@ -8,6 +8,7 @@ const Stock = ({ stock }: Props) => {
   let message = "";
   let color = "red";
 
+  // Show different badge based on stock
   if (stock < 10) {
     message = `Only ${stock} in stock!!!`;
   } else if (stock < 20) {

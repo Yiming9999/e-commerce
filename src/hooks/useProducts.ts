@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import apiClient from '../services/api-client';
-import { CanceledError } from 'axios';
+import { useEffect, useState } from "react";
+import apiClient from "../services/api-client";
+import { CanceledError } from "axios";
 
 export interface Product {
   id: number;
@@ -13,6 +13,7 @@ export interface Product {
   discountPercentage: number;
   brand: string;
   category: string;
+  thumbnail: string;
 }
 
 interface FetchProductsResponse {
@@ -30,17 +31,17 @@ const useProducts = (selectedCategory: string, searchText: string) => {
 
     setLoading(true);
 
-    let endpoint = '/products';
+    let endpoint = "/products";
     const queryParams = new URLSearchParams();
 
-    if (selectedCategory && !searchText) {
-      endpoint += '/category/' + selectedCategory;
-    } else if (searchText && !selectedCategory) {
-      queryParams.append('q', searchText);
-      endpoint += '/search?' + queryParams.toString();
-    } else if (searchText && selectedCategory) {
-      queryParams.append('q', searchText);
-      endpoint += '/search?' + queryParams.toString();
+    // Delete category after search
+    if (searchText) {
+      queryParams.append("q", searchText);
+      endpoint += "/search?" + queryParams.toString();
+      selectedCategory = "";
+    } else if (selectedCategory) {
+      endpoint += "/category/" + selectedCategory;
+      searchText = "";
     }
 
     apiClient
@@ -59,6 +60,6 @@ const useProducts = (selectedCategory: string, searchText: string) => {
   }, [selectedCategory, searchText]);
 
   return { products, error, isLoading };
-}
+};
 
 export default useProducts;

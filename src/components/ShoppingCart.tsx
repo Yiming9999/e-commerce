@@ -9,6 +9,7 @@ import {
   Th,
   Thead,
   Tr,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { Product } from "../hooks/useProducts";
 import { useState } from "react";
@@ -17,38 +18,45 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-interface Props {
+export interface CartInformation {
   items: CartItem[];
-  onDelete: (id: number) => void;
-  onAdd: (id: number) => void;
-  onRemove: (id: number) => void;
+  total: number;
+  discountedTotal: number;
+  userId: number;
+  totalProducts: number;
+  totalQuantity: number;
+  id: number;
+  onDelete: (cartId: number, productId: number) => Promise<void>;
+  onAdd: (userId: number, product: CartItem) => Promise<void>;
+  onRemove: (userId: number, product: CartItem) => Promise<void>;
 }
 
-const ShoppingCart = ({ items, onDelete, onAdd, onRemove }: Props) => {
+const ShoppingCart = ({
+  items,
+  total,
+  discountedTotal,
+  totalQuantity,
+  onDelete,
+  onAdd,
+  onRemove,
+}: CartInformation) => {
   const [isCartVisible, setCartVisible] = useState(false);
+
+  // Calculate the delivery fee
+  const deliveryFee = total > 100 ? 0 : 5.99;
+  const finalTotal = discountedTotal + deliveryFee;
 
   const toggleCartVisibility = () => {
     setCartVisible(!isCartVisible);
   };
 
-  const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
-  const totalAmount = items.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
-  const totalSaving = items.reduce(
-    (acc, item) =>
-      acc + (item.price * item.quantity * item.discountPercentage) / 100,
-    0
-  );
+  // Different cart background color based on color mode
+  const cartBg = useColorModeValue("white", "gray.700");
 
   return (
-    <Box position="relative">
+    <Box position="fixed" top="20px" right="20px" zIndex="tooltip">
       {totalQuantity > 0 && (
         <Box
-          position="absolute"
-          top="-5px"
-          right="-5px"
           bg="red.500"
           borderRadius="full"
           color="white"
@@ -56,6 +64,9 @@ const ShoppingCart = ({ items, onDelete, onAdd, onRemove }: Props) => {
           px={1}
           py={1}
           fontSize="sm"
+          position="absolute"
+          top="-10px"
+          right="-10px"
         >
           {totalQuantity}
         </Box>
@@ -64,17 +75,26 @@ const ShoppingCart = ({ items, onDelete, onAdd, onRemove }: Props) => {
         <Image src="src/assets/cart.webp" alt="Cart" boxSize="50px" />
       </Box>
       {isCartVisible && (
-        <Box width="100%" overflowX="auto">
+        <Box
+          position="absolute"
+          right="5px"
+          mt="70px"
+          maxW="2000px"
+          overflowX="auto"
+          bg={cartBg}
+          boxShadow="md"
+          zIndex="dropdown"
+        >
           {totalQuantity === 0 ? (
-            <Box textAlign="center" fontSize="3xl">
+            <Box textAlign="center" fontSize="xl">
               Your cart is empty
             </Box>
           ) : (
             <Table variant="simple">
               <Thead>
                 <Tr>
+                  <Th></Th>
                   <Th>Title</Th>
-                  <Th>Category</Th>
                   <Th>Price</Th>
                   <Th>Discount</Th>
                   <Th>Quantity</Th>
@@ -83,53 +103,72 @@ const ShoppingCart = ({ items, onDelete, onAdd, onRemove }: Props) => {
                 </Tr>
               </Thead>
               <Tbody>
-                {items.map((item) => (
-                  <Tr key={item.id}>
-                    <Td>{item.title}</Td>
-                    <Td>{item.category}</Td>
-                    <Td>${item.price.toFixed(2)}</Td>
-                    <Td>{item.discountPercentage}%</Td>
-                    <Td>{item.quantity}</Td>
-                    <Td>
-                      <Button
-                        colorScheme="green"
-                        size="sm"
-                        onClick={() => onRemove(item.id)}
-                      >
-                        -
-                      </Button>
-                      <Button
-                        colorScheme="green"
-                        size="sm"
-                        onClick={() => onAdd(item.id)}
-                      >
-                        +
-                      </Button>
-                    </Td>
-                    <Td>
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        onClick={() => onDelete(item.id)}
-                      >
-                        Delete
-                      </Button>
-                    </Td>
-                  </Tr>
-                ))}
+                {items
+                  .filter((item) => item.quantity > 0)
+                  .map((item) => (
+                    <Tr key={item.id}>
+                      <Td>
+                        {/* Help with accessibility */}
+                        <Image
+                          src={item.thumbnail}
+                          alt={item.title}
+                          boxSize="50px"
+                          objectFit="cover"
+                        />
+                      </Td>
+                      <Td>{item.title}</Td>
+                      <Td>${item.price.toFixed(2)}</Td>
+                      <Td>{item.discountPercentage}%</Td>
+                      <Td>{item.quantity}</Td>
+                      <Td>
+                        {/* Remove one selected item */}
+                        <Button
+                          colorScheme="green"
+                          size="xs"
+                          onClick={() => onRemove(1, item)}
+                        >
+                          -
+                        </Button>
+                        {/* Add one more selected item */}
+                        <Button
+                          colorScheme="green"
+                          size="xs"
+                          onClick={() => onAdd(1, item)}
+                        >
+                          +
+                        </Button>
+                      </Td>
+                      <Td>
+                        <Button
+                          colorScheme="red"
+                          size="sm"
+                          onClick={() => onDelete(1, item.id)}
+                        >
+                          Delete
+                        </Button>
+                      </Td>
+                    </Tr>
+                  ))}
               </Tbody>
-              {totalSaving !== 0 && (
+              {discountedTotal !== 0 && (
                 <Tfoot>
                   <Tr>
                     <Td>Total</Td>
-                    <Td colSpan={4} color="red">
-                      $ {totalAmount.toFixed(2)} (Save ${totalSaving.toFixed(2)}
-                      )
-                    </Td>
+                    <Td colSpan={1}>$ {total.toFixed(2)}</Td>
                     <Td>After discount</Td>
-                    <Td color="green">
-                      $ {(totalAmount - totalSaving).toFixed(2)}
+                    <Td colSpan={2} color="green">
+                      $ {discountedTotal.toFixed(2)}
                     </Td>
+                    <Td>Delivery Fee</Td>
+                    <Td>
+                      {deliveryFee === 0
+                        ? "$0.00"
+                        : `$${deliveryFee.toFixed(2)}`}
+                    </Td>
+                  </Tr>
+                  <Tr>
+                    <Td colSpan={6}>Final Total</Td>
+                    <Td color="green.500">$ {finalTotal.toFixed(2)}</Td>
                   </Tr>
                 </Tfoot>
               )}

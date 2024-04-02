@@ -6,11 +6,13 @@ interface Props {
 }
 
 const Rating = ({ rating }: Props) => {
+  // Rating number color
   let color = rating > 4.75 ? "green" : rating > 4.5 ? "yellow" : "red";
 
   const fullStarts = Math.floor(rating);
   const left = rating - fullStarts;
 
+  // Star color
   const starColor = (i: number) => {
     if (i < fullStarts) {
       return "teal.500";
@@ -35,6 +37,7 @@ const Rating = ({ rating }: Props) => {
       >
         {rating}
       </Badge>
+      {/* Display 5 stars */}
       {Array(5)
         .fill("")
         .map((_, i) => (
